@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Resume Analyzer</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <div class="container">
+    <h1>Resume Analyzer</h1>
+    <form id="resume-form">
+
+      <label>Full Name</label>
+      <input type="text" id="name" required />
+
+      <label>Email</label>
+      <input type="email" id="email" required />
+
+      <label>Professional Summary</label>
+      <textarea id="summary" required></textarea>
+
+      <label>Experience</label>
+      <textarea id="experience" required></textarea>
+
+      <label>Skills</label>
+      <textarea id="skills" required></textarea>
+
+      <label>Education</label>
+      <textarea id="education" required></textarea>
+
+      <label>Job Description (Upload .txt file)</label>
+      <input type="file" id="jdFile" accept=".txt" required />
+
+      <button type="submit">Analyze Resume</button>
+    </form>
+
+    <div class="loader" id="loader">
+      <span></span><span></span><span></span>
+    </div>
+
+    <div class="result" id="result">
+      <h3>AI Feedback</h3>
+      <p><strong>Job Fit Score:</strong> <span id="fit-score"></span>%</p>
+      <ul id="feedback-list"></ul>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById("resume-form");
+    const result = document.getElementById("result");
+    const loader = document.getElementById("loader");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      loader.style.display = "block";
+      result.style.display = "none";
+
+      const formData = new FormData();
+      formData.append("resume", JSON.stringify({
+        name: document.getElementById("name").value,
+        email: document.getElementById("email").value,
+        summary: document.getElementById("summary").value,
+        experience: document.getElementById("experience").value,
+        skills: document.getElementById("skills").value,
+        education: document.getElementById("education").value
+      }));
+      formData.append("jobDescription", document.getElementById("jdFile").files[0]);
+
+      try {
+        const response = await fetch("/api/analyze", {
+          method: "POST",
+          body: formData
+        });
+
+        const data = await response.json();
+        document.getElementById("fit-score").innerText = data.jobFitScore;
+        document.getElementById("feedback-list").innerHTML =
+          data.suggestions.map(f => `<li>${f}</li>`).join('');
+
+        setTimeout(() => {
+          loader.style.display = "none";
+          result.style.display = "block";
+          result.scrollIntoView({ behavior: "smooth" });
+        }, 500);
+
+      } catch (error) {
+        console.error("Error:", error);
+        loader.style.display = "none";
+        alert("Something went wrong. Try again.");
+      }
+    });
+  </script>
+</body>
+</html>
